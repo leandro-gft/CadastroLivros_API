@@ -2,12 +2,16 @@ package br.com.gft.projetoapi.resources;
 
 import java.net.URI;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -52,8 +56,10 @@ public class LivroResources {
 																	// objeto de retorno (no caso livro) e manipular
 																	// informações do HTTP. A '?' significa que pode
 																	// manipular qualqeur tipo de objeto
+		
+		CacheControl cacheControl = CacheControl.maxAge(20, TimeUnit.SECONDS); //VALIDADE DE 20 segundos
 		Livro livro =  livrosService.buscar(id); 
-		return ResponseEntity.status(HttpStatus.OK).body(livro); // posso setar o status e o corpo da resposta
+		return ResponseEntity.status(HttpStatus.OK).cacheControl(cacheControl).body(livro); // posso setar o status e o corpo da resposta
 	}
 
 	@DeleteMapping("/{id}")
@@ -83,6 +89,10 @@ public class LivroResources {
 	
 	@PostMapping("/{id}/comentarios")
 	public ResponseEntity<Void> adicionarComentario(@PathVariable("id") Long livroId, @RequestBody Comentario comentario) {
+		
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		
+		comentario.setUsuario(auth.getName()); //pega o usuario autenticado e salva no atributo usuario
 		
 		livrosService.salvarComentario(livroId, comentario);
 		
